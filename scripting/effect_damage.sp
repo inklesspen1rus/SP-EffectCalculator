@@ -1,6 +1,11 @@
 #include <sdkhooks>
 #include <effectcalc>
 
+public Plugin myinfo = {
+	name = "Effect Calculator - Damage",
+	author = "1.0"
+}
+
 int effect = -1
 bool gLate
 

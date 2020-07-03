@@ -36,7 +36,7 @@ int effect = -1;
 
 public Plugin myinfo =
 {
-	name = "[VIP] Speed (Effect Calc support)",
+	name = "[VIP] Speed (Effect Calculator)",
 	author = "R1KO, vadrozh (ecalc support by inklesspen)",
 	description = "Увеличение скорости VIP игроков",
 	version = "1.2.0",

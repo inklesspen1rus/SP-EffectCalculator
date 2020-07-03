@@ -1,5 +1,10 @@
 #include <effectcalc>
 
+public Plugin myinfo = {
+	name = "Effect Calculator - Damage Copycat",
+	author = "1.0"
+}
+
 int effect = -1
 bool gPlayerCopycat[MAXPLAYERS+1]
 bool blockloop

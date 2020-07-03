@@ -1,6 +1,11 @@
 #include <effectcalc>
 #include <sdkhooks>
 
+public Plugin myinfo = {
+	name = "ECalcTest - Speed+ with knife",
+	author = "1.0"
+}
+
 const float boost = 0.3 // +30%
 
 int effect = -1

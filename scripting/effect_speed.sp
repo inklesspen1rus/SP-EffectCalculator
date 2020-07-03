@@ -1,6 +1,11 @@
 #include <sdkhooks>
 #include <effectcalc>
 
+public Plugin myinfo = {
+	name = "Effect Calculator - Speed",
+	author = "1.0"
+}
+
 // Global effect id
 int effect = -1
 int offs_LaggedMovementValue

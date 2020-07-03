@@ -1,5 +1,10 @@
 #include <effectcalc>
 
+public Plugin myinfo = {
+	name = "ECalcTest - Speed+ for Terrorists",
+	author = "1.0"
+}
+
 const float boost = 0.2 
 
 public void OnPluginStart()
