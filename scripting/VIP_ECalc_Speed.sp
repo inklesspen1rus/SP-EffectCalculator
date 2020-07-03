@@ -56,7 +56,7 @@ public void OnPluginStart()
 		VIP_OnVIPLoaded();
 	
 	// проверяем effectcalc при старте плагина
-	if(LibraryExists("effetcalc")) // если включен
+	if(LibraryExists("effectcalc")) // если включен
 	{
 		UseECalc = true; // обновляем переменную
 		ECalc_Hook("speed", "vip", ModifySpeed_Mult); // ловим просчет скорости отдельно, для умножения

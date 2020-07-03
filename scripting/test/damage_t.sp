@@ -4,7 +4,7 @@ const float boost = 1.0 // +100%
 
 public void OnPluginStart()
 {
-	if(LibraryExists("effetcalc"))
+	if(LibraryExists("effectcalc"))
 		ECalc_Hook("damage", "base", ModifyDamage)
 }
 
@@ -17,7 +17,7 @@ public void OnLibraryAdded(const char[] name)
 public void ModifyDamage(any[] data, int size, float &value)
 {
 	// see data struct in effect_damage.sp
-	if(0 < data[1] <= MaxClients & GetClientTeam(data[1])) // if attacker is terrorist
+	if(0 < data[1] <= MaxClients && GetClientTeam(data[1]) == 2) // if attacker is terrorist
 	{
 		value += boost
 	}

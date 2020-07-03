@@ -11,8 +11,8 @@ public APLRes AskPluginLoad2(Handle plugin, bool late, char[] error, int max)
 
 public void OnPluginStart()
 {
-	if(LibraryExists("effetcalc"))
-		effect = ECalc_GetEffect("speed")
+	if(LibraryExists("effectcalc"))
+		effect = ECalc_GetEffect("damage")
 	
 	if(gLate)
 	{
@@ -40,7 +40,7 @@ public void OnLibraryRemoved(const char[] name)
 public void OnLibraryAdded(const char[] name)
 {
 	if(!strcmp(name, "effectcalc"))
-		effect = ECalc_GetEffect("speed")
+		effect = ECalc_GetEffect("damage")
 }
 
 public void OnEntityCreated(int entity, const char[] classname)

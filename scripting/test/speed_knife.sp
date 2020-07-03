@@ -32,7 +32,7 @@ public void OnPluginStart()
 		}
 	}
 	
-	if(LibraryExists("effetcalc"))
+	if(LibraryExists("effectcalc"))
 	{
 		ECalc_Hook("speed", "base", ModifySpeed)
 		effect = ECalc_GetEffect("speed")

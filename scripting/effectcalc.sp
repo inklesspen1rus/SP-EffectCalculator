@@ -7,12 +7,17 @@ public Plugin myinfo = {
 // Structs bcs of heavy plugin construction
 enum struct Mult
 {
+	// Local name
+	char name[32]
+	
 	// Forward of Multiplier
 	PrivateForward _fwd
 	
 	// Multiplier initialization
-	void Init()
+	void Init(const char[] name)
 	{
+		strcopy(this.name, 32, name)
+		
 		// Create private forward
 		this._fwd = new PrivateForward(ET_Ignore, Param_Array, Param_Cell, Param_FloatByRef)
 	}
@@ -79,8 +84,10 @@ enum struct Effect
 			temp = 1.0
 			this._mults.GetArray(i, mult, sizeof mult)
 			mult.Calculate(data, size, temp)
+			PrintToServer("%s %s %f", this.name, mult.name, temp)
 			value *= temp
 		}
+		PrintToServer("%s %f", this.name, value)
 		return value
 	}
 	
@@ -88,8 +95,10 @@ enum struct Effect
 	int AddMult(const char[] name)
 	{
 		Mult mult
-		mult.Init()
-		this._multnames.SetValue(name, this._mults.PushArray(mult, sizeof mult))
+		mult.Init(name)
+		int index = this._mults.PushArray(mult, sizeof mult)
+		this._multnames.SetValue(name, index)
+		return index
 	}
 	
 	// Find or create multiplier by name

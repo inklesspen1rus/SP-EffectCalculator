@@ -7,7 +7,7 @@ int offs_LaggedMovementValue
 
 public void OnPluginStart()
 {
-	if(LibraryExists("effetcalc"))
+	if(LibraryExists("effectcalc"))
 		effect = ECalc_GetEffect("speed")
 	
 	offs_LaggedMovementValue = FindSendPropInfo("CBasePlayer", "m_flLaggedMovementValue")

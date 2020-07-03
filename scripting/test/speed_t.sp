@@ -4,7 +4,7 @@ const float boost = 0.2
 
 public void OnPluginStart()
 {
-	if(LibraryExists("effetcalc"))
+	if(LibraryExists("effectcalc"))
 		ECalc_Hook("speed", "base", ModifySpeed)
 }
 

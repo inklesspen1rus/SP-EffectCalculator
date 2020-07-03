@@ -4,7 +4,7 @@ const float boost = 1.0 // +100%
 
 public void OnPluginStart()
 {
-	if(LibraryExists("effetcalc"))
+	if(LibraryExists("effectcalc"))
 		ECalc_Hook("damage", "base", ModifyDamage)
 }
 
