@@ -4,8 +4,13 @@
 const float boost = 0.3 // +30%
 
 int effect = -1
-
+bool gLate
 int offs_LaggedMovementValue
+
+public APLRes AskPluginLoad2(Handle plugin, bool late, char[] error, int max)
+{
+	gLate = late
+}
 
 public void OnPluginStart()
 {
@@ -14,6 +19,17 @@ public void OnPluginStart()
 	{
 		SetFailState("Cant find \"m_flLaggedMovementValue\" prop")
 		return
+	}
+
+	if(gLate)
+	{
+		for(int i = MaxClients;i;i--)
+		{
+			if(IsClientInGame(i))
+			{
+				OnClientPutInServer(i)
+			}
+		}
 	}
 	
 	if(LibraryExists("effetcalc"))

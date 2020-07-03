@@ -2,11 +2,33 @@
 #include <effectcalc>
 
 int effect = -1
+bool gLate
+
+public APLRes AskPluginLoad2(Handle plugin, bool late, char[] error, int max)
+{
+	gLate = late
+}
 
 public void OnPluginStart()
 {
 	if(LibraryExists("effetcalc"))
 		effect = ECalc_GetEffect("speed")
+	
+	if(gLate)
+	{
+		for(int i = MaxClients;i;i--)
+		{
+			if(IsClientInGame(i))
+			{
+				OnClientPutInServer(i)
+			}
+		}
+		for(int i = MaxClients+1;i!=2049;i++)
+		{
+			if(IsValidEntity(i))
+				OnEntityCreated(i, "")
+		}
+	}
 }
 
 public void OnLibraryRemoved(const char[] name)

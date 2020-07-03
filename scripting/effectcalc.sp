@@ -168,7 +168,7 @@ public void OnMapStart()
 	for(i = gEffects.Length-1;i!=-1;i--)
 	{
 		gEffects.GetArray(i, f, sizeof f)
-		for(g = f._mults.Length-1;i!=-1;i--)
+		for(g = f._mults.Length-1;g!=-1;g--)
 		{
 			f._mults.GetArray(g, mult, sizeof mult)
 			if(!mult.HookCount())
