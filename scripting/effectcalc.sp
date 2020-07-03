@@ -84,10 +84,10 @@ enum struct Effect
 			temp = 1.0
 			this._mults.GetArray(i, mult, sizeof mult)
 			mult.Calculate(data, size, temp)
-			PrintToServer("%s %s %f", this.name, mult.name, temp)
+			// PrintToServer("%s %s %f", this.name, mult.name, temp)
 			value *= temp
 		}
-		PrintToServer("%s %f", this.name, value)
+		// PrintToServer("%s %f", this.name, value)
 		return value
 	}
 	
