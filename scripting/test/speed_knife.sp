@@ -15,7 +15,7 @@ public APLRes AskPluginLoad2(Handle plugin, bool late, char[] error, int max)
 public void OnPluginStart()
 {
 	offs_LaggedMovementValue = FindSendPropInfo("CBasePlayer", "m_flLaggedMovementValue")
-	if(offs_LaggedMovementValue)
+	if(offs_LaggedMovementValue != -1)
 	{
 		SetFailState("Cant find \"m_flLaggedMovementValue\" prop")
 		return
