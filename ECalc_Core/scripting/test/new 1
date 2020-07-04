@@ -1,0 +1,40 @@
+#include <effectcalc>
+#include <sdkhooks>
+
+public void OnPluginStart()
+{
+	HookEvent("player_spawn", EventSpawn)
+}
+
+public void OnClientPutInServer(int client)
+{
+	SDKHook(client, SDKHook_WeaponSwitchPost, WeaponSwitchPost)
+}
+
+public void WeaponSwitchPost(int client, int args)
+{
+	SetEntDataFloat(client, Prop_Send, "m_flLaggedMovementValue", CalculateSpeed(client))
+}
+
+public void ModifySpeed(any[] data, int size, float &value)
+{
+	if(size && 0 < data[0] <= MaxClients)
+	{
+		int weapon = GetEntPropEnt(data[0], Prop_Send, "m_hActiveWeapon")
+		if(weapon == -1)
+			return
+		char sBuffer[8]
+		GetEntityNetClass(weapon, sBuffer, sizeof sBuffer)
+		if(!strncmp(sBuffer, "CKnife", 6))
+			value += boost
+	}
+}
+
+public void EventSpawn(Event event, const char[] name, bool dbc)
+{
+	int client = GetClientOfUserId(event.GetInt("userid"))
+	if(client)
+		SetEntDataFloat(client, Prop_Send, "m_flLaggedMovementValue", CalculateSpeed(client))
+}
+
+public float CalculateSpeed(int client)
