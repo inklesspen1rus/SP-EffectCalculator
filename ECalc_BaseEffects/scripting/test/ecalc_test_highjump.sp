@@ -1,12 +1,5 @@
 #include <effectcalc>
 
-public void OnPluginStart()
-{
-	if(LibraryExists("effectcalc"))
-	{
-		ECalc_Hook("highjump", "base", ModifyStat)
-	}
-}
 
 public void OnLibraryAdded(const char[] name)
 {

@@ -1,13 +1,5 @@
 #include <effectcalc>
 
-public void OnPluginStart()
-{
-	if(LibraryExists("effectcalc"))
-	{
-		ECalc_Hook("gravity", "base", ModifyStat)
-	}
-}
-
 public void OnLibraryAdded(const char[] name)
 {
 	if(!strcmp(name, "effectcalc"))

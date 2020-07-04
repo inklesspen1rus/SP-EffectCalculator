@@ -22,7 +22,7 @@ public Action DisplayHUD(Handle timer)
 			values[0] = ECalc_Run2("reload", data, 2)
 			
 			data[5] = -1
-			values[1] = ECalc_Run2("damage", data, 6)
+			values[1] = ECalc_Run2("dmgresist", data, 6)
 			
 			values[3] = ECalc_Run2("longjump", data, 1)
 			values[4] = ECalc_Run2("highjump", data, 1)
@@ -32,7 +32,7 @@ public Action DisplayHUD(Handle timer)
 			data[5] = GetEntPropEnt(i, Prop_Send, "m_hActiveWeapon")
 			values[2] = ECalc_Run2("damage", data, 6)
 			
-			PrintHintText(i, msgtype, GetEntPropFloat(i, Prop_Send, "m_flLaggedMovementValue")*100.0, GetEntityGravity(i)*100.0, values[2]*100.0, values[0]*100.0, values[1]*100.0, values[3]*100.0, values[4]*100.0)
+			PrintHintText(i, msgtype, GetEntPropFloat(i, Prop_Send, "m_flLaggedMovementValue")*100.0, GetEntityGravity(i)*100.0, values[2]*100.0, values[0]*100.0, 1.0/values[1]*100.0, values[3]*100.0, values[4]*100.0)
 		}
 	}
 }

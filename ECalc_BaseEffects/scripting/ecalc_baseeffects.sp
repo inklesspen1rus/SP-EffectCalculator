@@ -4,7 +4,7 @@
 
 public Plugin myinfo = {
 	name = "Effect Calculator - Base Effects",
-	author = "1.0"
+	author = "1.1"
 }
 
 int gEffect[8]
@@ -21,7 +21,7 @@ int offs_Velocity
 void InitEffects()
 {
 	gEffect[0] = ECalc_GetEffect("damage")
-	gEffect[1] = -1
+	gEffect[1] = ECalc_GetEffect("dmgresist")
 	gEffect[2] = ECalc_GetEffect("speed")
 	gEffect[3] = ECalc_GetEffect("gravity")
 	gEffect[4] = ECalc_GetEffect("reload")
@@ -49,9 +49,6 @@ public void OnPluginStart()
 	offs_ViewModel					= FindSendPropInfo2("CBasePlayer", "m_hViewModel")
 	offs_NextAttack					= FindSendPropInfo2("CBasePlayer", "m_flNextAttack")
 	offs_LaggedMovementValue		= FindSendPropInfo2("CBasePlayer", "m_flLaggedMovementValue")
-	
-	if(LibraryExists("effectcalc"))
-		InitEffects()
 	
 	if(gLate)
 	{
@@ -194,7 +191,7 @@ public Action OnEntityTakeDamage(int victim, int& attacker, int& inflictor, floa
 		dmginfo[3] = damage
 		dmginfo[4] = damagetype
 		dmginfo[5] = weapon
-		value = ECalc_Run(gEffect[0], dmginfo, sizeof dmginfo)
+		value = ECalc_Run(gEffect[0], dmginfo, sizeof dmginfo)/ECalc_Run(gEffect[1], dmginfo, sizeof dmginfo)
 		if(value != 1.0)
 		{
 			damage *= value
