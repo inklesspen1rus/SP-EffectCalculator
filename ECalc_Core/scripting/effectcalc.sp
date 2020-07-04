@@ -4,6 +4,9 @@ public Plugin myinfo = {
 	version = "1.0"
 }
 
+bool ecalcdebug = false
+StringMap debugignore
+
 // Structs bcs of heavy plugin construction
 enum struct Mult
 {
@@ -76,6 +79,7 @@ enum struct Effect
 	// Calculating final multiplier (as value)
 	float Calculate(any[] data, int size)
 	{
+		bool ignore = IsDebugIgnored(this.name)
 		float value = 1.0
 		float temp
 		Mult mult
@@ -84,10 +88,10 @@ enum struct Effect
 			temp = 1.0
 			this._mults.GetArray(i, mult, sizeof mult)
 			mult.Calculate(data, size, temp)
-			// PrintToServer("%s %s %f", this.name, mult.name, temp)
+			if(ecalcdebug && !ignore)	PrintToServer("%s %s %f", this.name, mult.name, temp)
 			value *= temp
 		}
-		// PrintToServer("%s %f", this.name, value)
+		if(ecalcdebug && !ignore)	PrintToServer("%s %f", this.name, value)
 		return value
 	}
 	
@@ -230,4 +234,39 @@ public any Native_Hook(Handle plugin, int num)
 	gEffects.GetArray(effect, f, sizeof f)
 	f.Hook(sBuffer, plugin, func, GetNativeCell(4))
 	gEffects.SetArray(effect, f, sizeof f)
+}
+
+public void OnPluginStart()
+{
+	debugignore = new StringMap()
+	
+	RegServerCmd("sm_effect_debug", EffectDebugCMD)
+	RegServerCmd("sm_effect_debug_ignore", EffectDebugIgnoreCMD)
+}
+
+public Action EffectDebugIgnoreCMD(int args)
+{
+	char sBuffer[32]
+	GetCmdArg(1, sBuffer, sizeof sBuffer)
+	IgnoreDebug(sBuffer, !IsDebugIgnored(sBuffer))
+}
+
+public Action EffectDebugCMD(int args)
+{
+	ecalcdebug = !ecalcdebug
+	PrintToServer("Debug: %i", ecalcdebug)
+	return Plugin_Handled
+}
+
+void IgnoreDebug(const char[] effect, bool ignore)
+{
+	debugignore.SetValue(effect, ignore)
+}
+
+bool IsDebugIgnored(const char[] effect)
+{
+	bool fa
+	if(debugignore.GetValue(effect, fa))
+		return fa
+	return false
 }

@@ -21,7 +21,7 @@ int offs_Velocity
 void InitEffects()
 {
 	gEffect[0] = ECalc_GetEffect("damage")
-	gEffect[1] = ECalc_GetEffect("dmgresist")
+	gEffect[1] = -1
 	gEffect[2] = ECalc_GetEffect("speed")
 	gEffect[3] = ECalc_GetEffect("gravity")
 	gEffect[4] = ECalc_GetEffect("reload")
@@ -39,14 +39,16 @@ public APLRes AskPluginLoad2(Handle plugin, bool late, char[] error, int max)
 
 public void OnPluginStart()
 {
-	offs_PlaybackRate = FindSendPropInfo2("CBaseAnimating", "m_flPlaybackRate")
-	offs_NextSecondaryAttack = FindSendPropInfo2("CBaseCombatWeapon", "m_flNextSecondaryAttack")
-	offs_NextPrimaryAttack = FindSendPropInfo2("CBaseCombatWeapon", "m_flNextPrimaryAttack")
-	offs_Owner = FindSendPropInfo2("CBaseCombatWeapon", "m_hOwner")
-	offs_ViewModel = FindSendPropInfo2("CBasePlayer", "m_hViewModel")
-	offs_NextAttack = FindSendPropInfo2("CBasePlayer", "m_flNextAttack")
-	offs_Velocity = FindSendPropInfo2("CBasePlayer", "m_vecVelocity")
-	offs_LaggedMovementValue = FindSendPropInfo2("CBasePlayer", "m_flLaggedMovementValue")
+	offs_PlaybackRate				= FindSendPropInfo2("CBaseAnimating", "m_flPlaybackRate")
+	offs_Velocity					= FindSendPropInfo2("CBaseGrenade", "m_vecVelocity")
+	
+	offs_NextSecondaryAttack		= FindSendPropInfo2("CBaseCombatWeapon", "m_flNextSecondaryAttack")
+	offs_NextPrimaryAttack			= FindSendPropInfo2("CBaseCombatWeapon", "m_flNextPrimaryAttack")
+	offs_Owner						= FindSendPropInfo2("CBaseCombatWeapon", "m_hOwner")
+	
+	offs_ViewModel					= FindSendPropInfo2("CBasePlayer", "m_hViewModel")
+	offs_NextAttack					= FindSendPropInfo2("CBasePlayer", "m_flNextAttack")
+	offs_LaggedMovementValue		= FindSendPropInfo2("CBasePlayer", "m_flLaggedMovementValue")
 	
 	if(LibraryExists("effectcalc"))
 		InitEffects()
@@ -100,7 +102,7 @@ public void ApplyEffects(int client)
 		GetEntDataVector(client, offs_Velocity, vecVel)
 		vecVel[0] *= value2
 		vecVel[1] *= value2
-		vecVel[2] *= value
+		vecVel[2] *= SquareRoot(value) // bcs of hard physics calculating (xF force = xF^2 height)
 		TeleportEntity(client, NULL_VECTOR, NULL_VECTOR, vecVel)
 	}
 }
@@ -136,9 +138,9 @@ public void ReloadPost(int weapon, bool success)
 	if(value == 1.0)
 		return
 	float curgametime = GetGameTime()
-	SetEntDataFloat(owner, offs_NextAttack, curgametime+(curgametime-GetEntDataFloat(owner, offs_NextAttack)/value))
-	SetEntDataFloat(weapon, offs_NextPrimaryAttack, curgametime+(curgametime-GetEntDataFloat(weapon, offs_NextPrimaryAttack)/value))
-	SetEntDataFloat(weapon, offs_NextSecondaryAttack, curgametime+(curgametime-GetEntDataFloat(weapon, offs_NextSecondaryAttack)/value))
+	SetEntDataFloat(owner, offs_NextAttack, curgametime+(GetEntDataFloat(owner, offs_NextAttack)-curgametime)/value)
+	SetEntDataFloat(weapon, offs_NextPrimaryAttack, curgametime+(GetEntDataFloat(weapon, offs_NextPrimaryAttack)-curgametime)/value)
+	SetEntDataFloat(weapon, offs_NextSecondaryAttack, curgametime+(GetEntDataFloat(weapon, offs_NextSecondaryAttack)-curgametime)/value)
 	
 	int viewmodel = GetEntDataEnt2(owner, offs_ViewModel)
 	if(viewmodel != -1)
@@ -150,6 +152,12 @@ public void OnClientPutInServer(int client)
 	SDKHookEx(client, SDKHook_OnTakeDamage, OnEntityTakeDamage)
 	SDKHookEx(client, SDKHook_GroundEntChangedPost, GroundEntChangedPost)
 	SDKHookEx(client, SDKHook_GetMaxHealth, GetMaxHealth)
+	SDKHookEx(client, SDKHook_WeaponSwitchPost, WeaponSwitchPost)
+}
+
+public void WeaponSwitchPost(int client, int weapon)
+{
+	CalculateSpeed(client)
 }
 
 public Action GetMaxHealth(int client, int &maxhealth)
@@ -168,7 +176,9 @@ public Action GetMaxHealth(int client, int &maxhealth)
 public void GroundEntChangedPost(int client)
 {
 	if(IsPlayerAlive(client))
+	{
 		CalculateGravity(client)
+	}
 }
 
 public Action OnEntityTakeDamage(int victim, int& attacker, int& inflictor, float& damage, int& damagetype, int& weapon, float damageForce[3], float damagePosition[3], int damagecustom)
@@ -184,7 +194,7 @@ public Action OnEntityTakeDamage(int victim, int& attacker, int& inflictor, floa
 		dmginfo[3] = damage
 		dmginfo[4] = damagetype
 		dmginfo[5] = weapon
-		value = ECalc_Run(gEffect[0], dmginfo, sizeof dmginfo)/ECalc_Run(gEffect[1], dmginfo, sizeof dmginfo)
+		value = ECalc_Run(gEffect[0], dmginfo, sizeof dmginfo)
 		if(value != 1.0)
 		{
 			damage *= value
