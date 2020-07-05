@@ -4,10 +4,10 @@
 
 public Plugin myinfo = {
 	name = "Effect Calculator - Base Effects",
-	author = "1.1"
+	author = "1.2"
 }
 
-int gEffect[8]
+int gEffect[9]
 
 int offs_LaggedMovementValue
 int offs_Owner
@@ -17,6 +17,7 @@ int offs_NextSecondaryAttack
 int offs_ViewModel
 int offs_PlaybackRate
 int offs_Velocity
+int offs_Alpha
 
 void InitEffects()
 {
@@ -28,6 +29,7 @@ void InitEffects()
 	gEffect[5] = ECalc_GetEffect("health")
 	gEffect[6] = ECalc_GetEffect("highjump")
 	gEffect[7] = ECalc_GetEffect("longjump")
+	gEffect[8] = ECalc_GetEffect("invis")
 }
 
 bool gLate
@@ -50,6 +52,12 @@ public void OnPluginStart()
 	offs_NextAttack					= FindSendPropInfo2("CBasePlayer", "m_flNextAttack")
 	offs_LaggedMovementValue		= FindSendPropInfo2("CBasePlayer", "m_flLaggedMovementValue")
 	
+	offs_Alpha		= FindSendPropInfo2("CBaseEntity", "m_clrRender") + 3
+	
+	ConVar cvar = FindConVar("sv_disable_immunity_alpha")
+	cvar.BoolValue = true
+	cvar.AddChangeHook(LockImmunityAlpha)
+	
 	if(gLate)
 	{
 		for(int i = MaxClients;i;i--)
@@ -68,6 +76,12 @@ public void OnPluginStart()
 	HookEvent("player_jump", PlayerJump)
 }
 
+public void LockImmunityAlpha(ConVar cvar, const char[] oldvalue, const char[] newvalue)
+{
+	if(strcmp(newvalue, "1"))
+		cvar.BoolValue = true
+}
+
 public void EventSpawn(Event event, const char[] name, bool dbc)
 {
 	int client = GetClientOfUserId(event.GetInt("userid"))
@@ -75,6 +89,10 @@ public void EventSpawn(Event event, const char[] name, bool dbc)
 	{
 		CalculateSpeed(client)
 		CalculateGravity(client)
+		CalculateInvis(client)
+		int data[1]
+		data[0] = client
+		SetEntityHealth(client, RoundToCeil(100.0 * (ECalc_Run(gEffect[5], data, 1))))
 	}
 }
 
@@ -166,7 +184,7 @@ public Action GetMaxHealth(int client, int &maxhealth)
 	float value = ECalc_Run(gEffect[5], data, 1)
 	if(value == 1.0)
 		return Plugin_Continue
-	maxhealth *= value
+	maxhealth = RoundToCeil(float(maxhealth) * value)
 	return Plugin_Changed
 }
 
@@ -208,6 +226,16 @@ void CalculateSpeed(int client)
 	int data[1]
 	data[0] = client
 	SetEntDataFloat(client, offs_LaggedMovementValue, ECalc_Run(gEffect[2], data, 1))
+}
+
+void CalculateInvis(int client)
+{
+	if(gEffect[8] == -1)
+		return
+	int data[1]
+	data[0] = client
+	SetEntityRenderMode(client, RENDER_TRANSALPHA)
+	SetEntData(client, offs_Alpha, RoundToCeil(255.0/ECalc_Run(gEffect[8], data, 1)), 1, true)
 }
 
 void CalculateGravity(int client)
