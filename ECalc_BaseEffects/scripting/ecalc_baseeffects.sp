@@ -55,8 +55,11 @@ public void OnPluginStart()
 	offs_Alpha		= FindSendPropInfo2("CBaseEntity", "m_clrRender") + 3
 	
 	ConVar cvar = FindConVar("sv_disable_immunity_alpha")
-	cvar.BoolValue = true
-	cvar.AddChangeHook(LockImmunityAlpha)
+	if(cvar != INVALID_HANDLE)
+	{
+		cvar.BoolValue = true
+		cvar.AddChangeHook(LockImmunityAlpha)
+	}
 	
 	if(gLate)
 	{
