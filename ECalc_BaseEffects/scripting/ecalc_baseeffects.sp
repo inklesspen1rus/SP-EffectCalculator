@@ -4,7 +4,7 @@
 
 public Plugin myinfo = {
 	name = "Effect Calculator - Base Effects",
-	author = "1.2"
+	author = "1.3"
 }
 
 int gEffect[9]
