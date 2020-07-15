@@ -4,7 +4,7 @@
 
 public Plugin myinfo = {
 	name = "Effect Calculator - Base Effects",
-	author = "1.3"
+	author = "1.4a"
 }
 
 int gEffect[9]
@@ -18,6 +18,8 @@ int offs_ViewModel
 int offs_PlaybackRate
 int offs_Velocity
 int offs_Alpha
+
+Handle fGetMaxHealth
 
 void InitEffects()
 {
@@ -37,10 +39,23 @@ bool gLate
 public APLRes AskPluginLoad2(Handle plugin, bool late, char[] error, int max)
 {
 	gLate = late
+
+	CreateNative("ECalc_GetClientMaxHealth", Native_GetClientMaxHealth)
 }
 
 public void OnPluginStart()
 {
+	GameData game = new GameData("sdkhooks.games")
+	int offset = game.GetOffset("GetMaxHealth")
+	game.Close()
+	if(offset != -1)
+	{
+		StartPrepSDKCall(SDKCall_Player)
+		PrepSDKCall_SetVirtual(offset)
+		PrepSDKCall_SetReturnInfo(SDKType_PlainOldData, SDKPass_Plain)
+		fGetMaxHealth = EndPrepSDKCall()
+	}
+
 	offs_PlaybackRate				= FindSendPropInfo2("CBaseAnimating", "m_flPlaybackRate")
 	offs_Velocity					= FindSendPropInfo2("CBaseGrenade", "m_vecVelocity")
 	
@@ -93,9 +108,7 @@ public void EventSpawn(Event event, const char[] name, bool dbc)
 		CalculateSpeed(client)
 		CalculateGravity(client)
 		CalculateInvis(client)
-		int data[1]
-		data[0] = client
-		SetEntityHealth(client, RoundToCeil(100.0 * (ECalc_Run(gEffect[5], data, 1))))
+		SetEntityHealth(client, GetMaxHealth(client))
 	}
 }
 
@@ -169,7 +182,7 @@ public void OnClientPutInServer(int client)
 {
 	SDKHookEx(client, SDKHook_OnTakeDamage, OnEntityTakeDamage)
 	SDKHookEx(client, SDKHook_GroundEntChangedPost, GroundEntChangedPost)
-	SDKHookEx(client, SDKHook_GetMaxHealth, GetMaxHealth)
+	SDKHookEx(client, SDKHook_GetMaxHealth, OnGetMaxHealth)
 	SDKHookEx(client, SDKHook_WeaponSwitchPost, WeaponSwitchPost)
 }
 
@@ -178,11 +191,11 @@ public void WeaponSwitchPost(int client, int weapon)
 	CalculateSpeed(client)
 }
 
-public Action GetMaxHealth(int client, int &maxhealth)
+public Action OnGetMaxHealth(int client, int &maxhealth)
 {
 	if(gEffect[0] == -1)
 		return Plugin_Continue
-	int data[1]
+	static int data[1]
 	data[0] = client
 	float value = ECalc_Run(gEffect[5], data, 1)
 	if(value == 1.0)
@@ -256,4 +269,25 @@ int FindSendPropInfo2(const char[] name, const char[] prop)
 	if(value == -1)
 		SetFailState("Class \"%s\" Prop \"%s\" not found", name, prop)
 	return value
+}
+
+int GetMaxHealth(int client)
+{
+	if(fGetMaxHealth != INVALID_HANDLE)
+		return SDKCall(fGetMaxHealth, client)
+	static int data[1]
+	data[0] = client
+	return RoundToCeil(ECalc_Run(gEffect[5], data, 1)*100.0)
+}
+
+public int Native_GetClientMaxHealth(Handle plugin, int num)
+{
+	int client = GetNativeCell(1)
+	if(!(0 < client < MaxClients))
+	{
+		ThrowNativeError(-1, "Client#%i is invalid", client)
+		return -1
+	}
+
+	return GetMaxHealth(client)
 }
