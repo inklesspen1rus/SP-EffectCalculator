@@ -141,6 +141,8 @@ ArrayList gEffects
 // And stringmap for fast-search by name
 StringMap gEffectNames
 
+GlobalForward fwdRecalculate
+
 public APLRes AskPluginLoad2(Handle plugin, bool late, char[] error, int max)
 {
 	// Init values
@@ -203,7 +205,7 @@ public any Native_GetEffect(Handle plugin, int num)
 	return GetEffectID(sBuffer)
 }
 
-public any Native_Run(Handle plugin, int num)
+public any ECalc_Recalculate(Handle plugin, int num)
 {
 	int client = GetNativeCell(1)
 	char sBuffer[32]
@@ -213,6 +215,7 @@ public any Native_Run(Handle plugin, int num)
 	Call_PushString(sBuffer)
 	Call_Finish()
 }
+
 public any Native_Run(Handle plugin, int num)
 {
 	int effect = GetNativeCell(1)
@@ -246,8 +249,6 @@ public any Native_Hook(Handle plugin, int num)
 	f.Hook(sBuffer, plugin, func, GetNativeCell(4))
 	gEffects.SetArray(effect, f, sizeof f)
 }
-
-GlobalForward fwdRecalculate
 
 public void OnPluginStart()
 {
