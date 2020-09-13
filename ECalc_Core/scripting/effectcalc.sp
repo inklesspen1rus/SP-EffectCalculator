@@ -262,7 +262,7 @@ public any ECalc_HookApply(Handle plugin, int num)
 {
 	char sBuffer[32]
 	GetNativeString(1, sBuffer, sizeof sBuffer)
-	Function func = GetNativeFunction(3)
+	Function func = GetNativeFunction(2)
 	if(func == INVALID_FUNCTION)
 	{
 		ThrowNativeError(0, "INVALID_FUNCTION")
@@ -270,7 +270,7 @@ public any ECalc_HookApply(Handle plugin, int num)
 	}
 	Effect f
 	GetEffect(sBuffer, f)
-	f.HookApply(plugin, func, GetNativeCell(4))
+	f.HookApply(plugin, func, GetNativeCell(3))
 }
 
 public any Native_Hook(Handle plugin, int num)
