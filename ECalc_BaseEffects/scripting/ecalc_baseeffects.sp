@@ -4,10 +4,8 @@
 
 public Plugin myinfo = {
 	name = "Effect Calculator - Base Effects",
-	author = "1.4a"
+	author = "2.0"
 }
-
-int gEffect[9]
 
 int offs_LaggedMovementValue
 int offs_Owner
@@ -21,18 +19,15 @@ int offs_Alpha
 
 Handle fGetMaxHealth
 
-void InitEffects()
-{
-	gEffect[0] = ECalc_GetEffect("damage")
-	gEffect[1] = ECalc_GetEffect("dmgresist")
-	gEffect[2] = ECalc_GetEffect("speed")
-	gEffect[3] = ECalc_GetEffect("gravity")
-	gEffect[4] = ECalc_GetEffect("reload")
-	gEffect[5] = ECalc_GetEffect("health")
-	gEffect[6] = ECalc_GetEffect("highjump")
-	gEffect[7] = ECalc_GetEffect("longjump")
-	gEffect[8] = ECalc_GetEffect("invis")
-}
+ConVar cvarDamage
+ConVar cvarDMGResist
+ConVar cvarSpeed
+ConVar cvarGravity
+ConVar cvarReload
+ConVar cvarHealth
+ConVar cvarHighjump
+ConVar cvarLongjump
+ConVar cvarInvis
 
 bool gLate
 
@@ -92,6 +87,16 @@ public void OnPluginStart()
 	
 	HookEvent("player_spawn", EventSpawn)
 	HookEvent("player_jump", PlayerJump)
+
+	cvarDamage		= CreateConVar("sm_baseeffects_damage",			"1", "Enable or disable effect", _, true, 0.0, true, 1.0)
+	cvarDMGResist	= CreateConVar("sm_baseeffects_dmgresist",		"1", "Enable or disable effect", _, true, 0.0, true, 1.0)
+	cvarSpeed		= CreateConVar("sm_baseeffects_speed",			"1", "Enable or disable effect", _, true, 0.0, true, 1.0)
+	cvarGravity		= CreateConVar("sm_baseeffects_gravity",		"1", "Enable or disable effect", _, true, 0.0, true, 1.0)
+	cvarReload		= CreateConVar("sm_baseeffects_reloadspeed",	"1", "Enable or disable effect", _, true, 0.0, true, 1.0)
+	cvarHealth		= CreateConVar("sm_baseeffects_health",			"1", "Enable or disable effect", _, true, 0.0, true, 1.0)
+	cvarHighjump	= CreateConVar("sm_baseeffects_highjump",		"1", "Enable or disable effect", _, true, 0.0, true, 1.0)
+	cvarLongjump	= CreateConVar("sm_baseeffects_longjump",		"1", "Enable or disable effect", _, true, 0.0, true, 1.0)
+	cvarInvis		= CreateConVar("sm_baseeffects_invis",			"1", "Enable or disable effect", _, true, 0.0, true, 1.0)
 }
 
 public void LockImmunityAlpha(ConVar cvar, const char[] oldvalue, const char[] newvalue)
@@ -122,10 +127,8 @@ public void ApplyEffects(int client)
 	client = GetClientOfUserId(client)
 	if(client)
 	{
-		int data[1]
-		data[0] = client
-		float value = ECalc_Run(gEffect[6], data, 1)
-		float value2 = ECalc_Run(gEffect[7], data, 1)
+		float value = cvarHighjump.BoolValue ? ECalc_Run2(client, "highjump") : 1.0
+		float value2 = cvarLongjump.BoolValue ? ECalc_Run2(client, "longjump") : 1.0
 		if(value == value2 && value == 1.0)
 			return
 		
@@ -141,7 +144,24 @@ public void ApplyEffects(int client)
 public void OnLibraryAdded(const char[] name)
 {
 	if(!strcmp(name, "effectcalc"))
-		InitEffects()
+	{
+		ECalc_HookApply("speed", ApplySpeed)
+		ECalc_HookApply("gravity", ApplyGravity)
+	}
+}
+
+public Action ApplyGravity(int client)
+{
+	if(!cvarSpeed.BoolValue)	return Plugin_Continue
+	CalculateGravity(client)
+	return Plugin_Stop
+}
+
+public Action ApplySpeed(int client)
+{
+	if(!cvarSpeed.BoolValue)	return Plugin_Continue
+	CalculateSpeed(client)
+	return Plugin_Stop
 }
 
 public void OnEntityCreated(int entity, const char[] classname)
@@ -158,14 +178,15 @@ public void OnEntityCreated(int entity, const char[] classname)
 
 public void ReloadPost(int weapon, bool success)
 {
+	if(!cvarReload.BoolValue)	return
+
 	int owner = GetEntDataEnt2(weapon, offs_Owner)
 	if(owner == -1)
 		return
 	
-	int data[2]
-	data[0] = owner
-	data[1] = weapon
-	float value = ECalc_Run(gEffect[4], data, 2)
+	int data[1]
+	data[0] = weapon
+	float value = ECalc_Run2(owner, "reload", data, sizeof data)
 	if(value == 1.0)
 		return
 	float curgametime = GetGameTime()
@@ -193,11 +214,8 @@ public void WeaponSwitchPost(int client, int weapon)
 
 public Action OnGetMaxHealth(int client, int &maxhealth)
 {
-	if(gEffect[0] == -1)
-		return Plugin_Continue
-	static int data[1]
-	data[0] = client
-	float value = ECalc_Run(gEffect[5], data, 1)
+	if(!cvarHealth.BoolValue)	return Plugin_Continue
+	float value = ECalc_Run2(client, "health")
 	if(value == 1.0)
 		return Plugin_Continue
 	maxhealth = RoundToCeil(float(maxhealth) * value)
@@ -214,53 +232,38 @@ public void GroundEntChangedPost(int client)
 
 public Action OnEntityTakeDamage(int victim, int& attacker, int& inflictor, float& damage, int& damagetype, int& weapon, float damageForce[3], float damagePosition[3], int damagecustom)
 {
-	any dmginfo[6]
-	float value 
-	if(gEffect[0] != -1)
-	{
-		// fill data array
+	any dmginfo[5]
+	dmginfo[1] = inflictor
+	dmginfo[2] = damage
+	dmginfo[3] = damagetype
+	dmginfo[4] = weapon
+	if(cvarDamage.BoolValue && 1 <= attacker <= MaxClients)	{
 		dmginfo[0] = victim
-		dmginfo[1] = attacker
-		dmginfo[2] = inflictor
-		dmginfo[3] = damage
-		dmginfo[4] = damagetype
-		dmginfo[5] = weapon
-		value = ECalc_Run(gEffect[0], dmginfo, sizeof dmginfo)/ECalc_Run(gEffect[1], dmginfo, sizeof dmginfo)
-		if(value != 1.0)
-		{
-			damage *= value
-			return Plugin_Changed
-		}
+		damage *= ECalc_Run2(attacker, "damage")
+	}
+	if(cvarDMGResist.BoolValue && 1 <= victim <= MaxClients)	{
+		dmginfo[0] = attacker
+		damage *= ECalc_Run2(victim, "dmgresist")
 	}
 	return Plugin_Continue
 }
 
 void CalculateSpeed(int client)
 {
-	if(gEffect[0] == -1)
-		return
-	int data[1]
-	data[0] = client
-	SetEntDataFloat(client, offs_LaggedMovementValue, ECalc_Run(gEffect[2], data, 1))
+	if(cvarSpeed.BoolValue)	SetEntDataFloat(client, offs_LaggedMovementValue, ECalc_Run2(client, "speed"))
 }
 
 void CalculateInvis(int client)
 {
-	if(gEffect[8] == -1)
-		return
-	int data[1]
-	data[0] = client
-	SetEntityRenderMode(client, RENDER_TRANSALPHA)
-	SetEntData(client, offs_Alpha, RoundToCeil(255.0/ECalc_Run(gEffect[8], data, 1)), 1, true)
+	if(cvarInvis.BoolValue)	{
+		SetEntityRenderMode(client, RENDER_TRANSALPHA)
+		SetEntData(client, offs_Alpha, RoundToCeil(255.0/ECalc_Run2(client, "invis")), 1, true)
+	}
 }
 
 void CalculateGravity(int client)
 {
-	if(gEffect[0] == -1)
-		return
-	int data[1]
-	data[0] = client
-	SetEntityGravity(client, 1.0/ECalc_Run(gEffect[3], data, 1))
+	if(cvarGravity.BoolValue)	SetEntityGravity(client, 1.0/ECalc_Run2(client, "gravity"))
 }
 
 int FindSendPropInfo2(const char[] name, const char[] prop)
@@ -275,9 +278,7 @@ int GetMaxHealth(int client)
 {
 	if(fGetMaxHealth != INVALID_HANDLE)
 		return SDKCall(fGetMaxHealth, client)
-	static int data[1]
-	data[0] = client
-	return RoundToCeil(ECalc_Run(gEffect[5], data, 1)*100.0)
+	return RoundToCeil(ECalc_Run2(client, "health")*100.0)
 }
 
 public int Native_GetClientMaxHealth(Handle plugin, int num)

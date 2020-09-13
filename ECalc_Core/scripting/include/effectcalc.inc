@@ -19,7 +19,7 @@
  *	Hook callback typeset
 ***/
 typeset ECalc_HookApplyCallBack	{
-	function void (int client)
+	function Action (int client) // return Plugin_Stop on applying
 }
 
 typeset ECalc_HookCallBack	{
@@ -74,7 +74,7 @@ native float ECalc_Run2(int client, const char[] effect, any[] data = NULL_VECTO
  *	@param	effect		client
  *	@param	effect		Name of effect
  *
- *	@return				true if effect exists has apply hook
+ *	@return				true if effect applied
 ***/
 native bool ECalc_Apply(int client, const char[] effect);
 

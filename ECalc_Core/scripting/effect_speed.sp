@@ -18,8 +18,6 @@ public void OnPluginStart()
 	}
 	
 	HookEvent("player_spawn", EventSpawn)
-
-	if(LibraryExists("effectcalc"))	ECalc_HookApply("speed", ApplyPlayerSpeed)
 }
 
 public void OnLibraryAdded(const char[] lib)	{
@@ -28,8 +26,9 @@ public void OnLibraryAdded(const char[] lib)	{
 	}
 }
 
-public void ApplyPlayerSpeed(int client)	{
+public Action ApplyPlayerSpeed(int client)	{
 	SetEntDataFloat(client, offs_LaggedMovementValue, ECalc_Run2(client, "speed"))
+	return Plugin_Stop
 }
 
 public void EventSpawn(Event event, const char[] name, bool dbc)

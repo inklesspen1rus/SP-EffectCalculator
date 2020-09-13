@@ -7,12 +7,6 @@ public Plugin myinfo = {
 
 const float boost = 0.2 
 
-public void OnPluginStart()
-{
-	if(LibraryExists("effectcalc"))
-		ECalc_Hook2("speed", "base", ModifySpeed)
-}
-
 public void OnLibraryAdded(const char[] name)
 {
 	if(!strcmp(name, "effectcalc"))

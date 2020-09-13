@@ -10,8 +10,6 @@ bool blockloop
 
 public void OnPluginStart()
 {
-	if(LibraryExists("effectcalc"))	ECalc_Hook2("damage", "copycat", ModifyDamage)
-	
 	RegAdminCmd("sm_damage_copycat", CopycatCMD, ADMFLAG_BAN)
 }
 

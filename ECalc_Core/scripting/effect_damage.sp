@@ -45,21 +45,18 @@ public void OnClientPutInServer(int client)
 
 public Action OnEntityTakeDamage(int victim, int& attacker, int& inflictor, float& damage, int& damagetype, int& weapon, float damageForce[3], float damagePosition[3], int damagecustom)
 {
-	static any dmginfo[6]
+	static any dmginfo[5]
 	dmginfo[0] = victim
 	dmginfo[1] = inflictor
 	dmginfo[2] = damage
 	dmginfo[3] = damagetype
 	dmginfo[4] = weapon
 	if(0 < attacker <= MaxClients)
-	{
 		damage *= ECalc_Run2(attacker, "damage", dmginfo, sizeof dmginfo)
-		return Plugin_Changed
-	}
 
 	if(0 < attacker <= MaxClients)	{
 		dmginfo[0] = attacker
-		damage /= ECalc_Run2(victim, "damage_resist", dmginfo, sizeof dmginfo)
+		damage /= ECalc_Run2(victim, "dmgresist", dmginfo, sizeof dmginfo)
 	}
 	return Plugin_Changed
 }

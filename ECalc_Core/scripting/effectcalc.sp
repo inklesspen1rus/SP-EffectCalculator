@@ -70,17 +70,17 @@ enum struct Effect
 		strcopy(this.name, 32, name) // copying name to local name
 		this._multnames = new StringMap() // creating stringmap for fast-search by name
 		this._mults = new ArrayList(sizeof mult) // ArrayList for multipliers
-		this._fwds_apply = new PrivateForward(ET_Ignore, Param_Cell)
+		this._fwds_apply = new PrivateForward(ET_Event, Param_Cell)
 	}
 	
 	// Calculating final multiplier (as value)
 	bool Apply(int client)
 	{
-		if(!this.ApplyHookCount())	return false
+		Action applied
 		Call_StartForward(this._fwds_apply)
 		Call_PushCell(client)
-		Call_Finish()
-		return true
+		Call_Finish(applied)
+		return applied == Plugin_Stop
 	}
 
 	float Calculate(int client, any[] data, int size)
