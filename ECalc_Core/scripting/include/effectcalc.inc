@@ -22,6 +22,7 @@ forward void ECalc_Requested(int client, const char[] effect);
 ***/
 typeset ECalc_HookCallBack	{
 	function void (any[] data, int size, float &value);
+	function void (any[] data, int size, float &value, const char[] effect);
 	//function void (enum struct data, int size, float &value); // if array size is 1 or enum struct
 }
 

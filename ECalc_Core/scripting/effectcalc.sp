@@ -22,16 +22,17 @@ enum struct Mult
 		strcopy(this.name, 32, name)
 		
 		// Create private forward
-		this._fwd = new PrivateForward(ET_Ignore, Param_Array, Param_Cell, Param_FloatByRef)
+		this._fwd = new PrivateForward(ET_Ignore, Param_Array, Param_Cell, Param_FloatByRef, Param_String)
 	}
 	
 	// Run hooks
-	void Calculate(any[] data, int size, float &value)
+	void Calculate(any[] data, int size, float &value, const char[] effect)
 	{
 		Call_StartForward(this._fwd)
 		Call_PushArray(data, size)
 		Call_PushCell(size)
 		Call_PushFloatRef(value)
+		Call_PushString(effect)
 		Call_Finish()
 	}
 	
@@ -87,7 +88,7 @@ enum struct Effect
 		{
 			temp = 1.0
 			this._mults.GetArray(i, mult, sizeof mult)
-			mult.Calculate(data, size, temp)
+			mult.Calculate(data, size, temp, this.name)
 			if(ecalcdebug && !ignore)	PrintToServer("%s %s %f", this.name, mult.name, temp)
 			value *= temp
 		}
