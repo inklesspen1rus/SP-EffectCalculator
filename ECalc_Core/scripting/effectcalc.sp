@@ -1,7 +1,7 @@
 public Plugin myinfo = {
 	name = "Effect Calculator - Core",
 	author = "inklesspen",
-	version = "1.0"
+	version = "1.1"
 }
 
 bool ecalcdebug = false
@@ -157,6 +157,7 @@ public APLRes AskPluginLoad2(Handle plugin, bool late, char[] error, int max)
 	CreateNative("ECalc_Hook", Native_Hook)
 	CreateNative("ECalc_Run", Native_Run)
 	CreateNative("ECalc_GetEffect", Native_GetEffect)
+	CreateNative("ECalc_Recalculate", ECalc_Recalculate)
 }
 
 // Find or create effect by name
@@ -204,6 +205,16 @@ public any Native_GetEffect(Handle plugin, int num)
 
 public any Native_Run(Handle plugin, int num)
 {
+	int client = GetNativeCell(1)
+	char sBuffer[32]
+	GetNativeString(1, sBuffer, sizeof sBuffer)
+	Call_StartForward(fwdRecalculate)
+	Call_PushCell(client)
+	Call_PushString(sBuffer)
+	Call_Finish()
+}
+public any Native_Run(Handle plugin, int num)
+{
 	int effect = GetNativeCell(1)
 	if(effect >= gEffects.Length)
 	{
@@ -236,12 +247,16 @@ public any Native_Hook(Handle plugin, int num)
 	gEffects.SetArray(effect, f, sizeof f)
 }
 
+GlobalForward fwdRecalculate
+
 public void OnPluginStart()
 {
 	debugignore = new StringMap()
 	
 	RegServerCmd("sm_effect_debug", EffectDebugCMD)
 	RegServerCmd("sm_effect_debug_ignore", EffectDebugIgnoreCMD)
+
+	fwdRecalculate = new GlobalForward("ECalc_Requested", ET_Ignore, Param_Cell, Param_String)
 }
 
 public Action EffectDebugIgnoreCMD(int args)

@@ -15,6 +15,8 @@
  * Good luck
 ***/
 
+forward void ECalc_Requested(int client, const char[] effect);
+
 /***
  *	Hook callback typeset
 ***/
@@ -45,6 +47,16 @@ native void ECalc_Hook(const char[] effect, const char[] mult_name, ECalc_HookCa
  *	@return	multiplier	Final multiplier of this effect, ready to use
 **/
 native float ECalc_Run(int effect, any[] data = NULL_VECTOR, int size = 0);
+
+/***
+ *	ECalc_Recalculate	Functions calls to recalculate some effects of player
+ *
+ *	@param	effect		client
+ *	@param	effect		Name of effect
+ *
+ *	@return				Effect ID for ECalc_Run
+***/
+native void ECalc_Recalculate(int client, const char[] effect);
 
 /***
  *	ECalc_GetEffect		Returns effect ID
