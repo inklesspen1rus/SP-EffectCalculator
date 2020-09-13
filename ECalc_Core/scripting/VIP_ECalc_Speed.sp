@@ -17,29 +17,26 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#pragma semicolon 1
-#pragma newdecls required
 
 #include <sourcemod>
 #include <sdktools_functions>
 #include <vip_core>
 #undef REQUIRE_PLUGIN
 #include <effectcalc>
+#pragma semicolon 1
+#pragma newdecls required
 
 #define VIP_SPEED	"Speed"
 
 // включен effectcalc или нет
 bool UseECalc = false;
 
-// ID эффекта для просчета скорости
-int effect = -1;
-
 public Plugin myinfo =
 {
 	name = "[VIP] Speed (Effect Calculator)",
 	author = "R1KO, vadrozh (ecalc support by inklesspen)",
 	description = "Увеличение скорости VIP игроков",
-	version = "1.2.0",
+	version = "1.2.0 x2",
 	url = "https://hlmod.ru"
 };
 
@@ -59,9 +56,8 @@ public void OnPluginStart()
 	if(LibraryExists("effectcalc")) // если включен
 	{
 		UseECalc = true; // обновляем переменную
-		ECalc_Hook("speed", "vip", ModifySpeed_Mult); // ловим просчет скорости отдельно, для умножения
-		ECalc_Hook("speed", "base", ModifySpeed_Add); // и общее, для сложения
-		effect = ECalc_GetEffect("speed"); // Регистрируем/получаем эффект скорости
+		ECalc_Hook2("speed", "vip", ModifySpeed_Mult); // ловим просчет скорости отдельно, для умножения
+		ECalc_Hook2("speed", "base", ModifySpeed_Add); // и общее, для сложения
 	}
 }
 
@@ -70,9 +66,8 @@ public void OnLibraryAdded(const char[] name) // если библиотека �
 	if(!strcmp(name, "effectcalc")) // и библиотека = effectcalc
 	{
 		UseECalc = true; // обновляем переменную
-		ECalc_Hook("speed", "vip", ModifySpeed_Mult); // ловим просчет скорости отдельно, для умножения
-		ECalc_Hook("speed", "base", ModifySpeed_Add); // и общее, для сложения
-		effect = ECalc_GetEffect("speed"); // Регистрируем/получаем эффект скорости
+		ECalc_Hook2("speed", "vip", ModifySpeed_Mult); // ловим просчет скорости отдельно, для умножения
+		ECalc_Hook2("speed", "base", ModifySpeed_Add); // и общее, для сложения
 	}
 }
 
@@ -108,12 +103,7 @@ public Action VIP_OnFeatureToggle(int iClient, const char[] szFeature, VIP_Toggl
 
 void GiveSpeed(int iClient)
 {
-	if(UseECalc) // если включен effectcalc, используем его
-	{
-		int temp[1]; // Создаем временный массив с размером 1
-		temp[0] = iClient; // записываем туда игрока
-		SetEntDataFloat(iClient, m_flLaggedMovementValue, ECalc_Run(effect, temp, 1), true); // выставляем игроку скорость, просчитанную с помощью Effect Calculator, на случай, если стоит effect_speed
-	}
+	if(UseECalc && ECalc_Apply(iClient, "speed")) return; // если включен effectcalc и зарегистрирован эффект скорости, используем его
 		
 	char sSpeed[16];
 	float fSpeed;
@@ -139,22 +129,14 @@ float GetSpeed(int iClient, bool base)
 	return 0.0;
 }
 
-public void ModifySpeed_Mult(any[] data, int size, float &value) // просчет скорости игрока, отдельное умножение
+public void ModifySpeed_Mult(int iClient, float &value) // просчет скорости игрока, отдельное умножение
 {
-	if(size && 0 < data[0] <= MaxClients)
-	{
-		int iClient = data[0]; // выводим из общего массива данных клиента
-		if(VIP_IsClientVIP(iClient) && VIP_IsClientFeatureUse(iClient, VIP_SPEED))
-			value += GetSpeed(iClient, false); // умножаем общую скорость
-	}
+	if(VIP_IsClientVIP(iClient) && VIP_IsClientFeatureUse(iClient, VIP_SPEED))
+		value += GetSpeed(iClient, false); // умножаем общую скорость
 }
 
-public void ModifySpeed_Add(any[] data, int size, float &value) // просчет скорости игрока, сложение значений
+public void ModifySpeed_Add(int iClient, float &value) // просчет скорости игрока, сложение значений
 {
-	if(size && 0 < data[0] <= MaxClients)
-	{
-		int iClient = data[0]; // выводим из общего массива данных клиента
-		if(VIP_IsClientVIP(iClient) && VIP_IsClientFeatureUse(iClient, VIP_SPEED)) // если игрок - вип, и функция скорости активна
-			value += GetSpeed(iClient, true); // прибавляем скорость к общему множителю
-	}
+	if(VIP_IsClientVIP(iClient) && VIP_IsClientFeatureUse(iClient, VIP_SPEED)) // если игрок - вип, и функция скорости активна
+		value += GetSpeed(iClient, true); // прибавляем скорость к общему множителю
 }

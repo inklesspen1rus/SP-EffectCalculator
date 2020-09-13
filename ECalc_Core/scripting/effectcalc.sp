@@ -74,11 +74,13 @@ enum struct Effect
 	}
 	
 	// Calculating final multiplier (as value)
-	float Apply(int client)
+	bool Apply(int client)
 	{
+		if(!this.ApplyHookCount())	return false
 		Call_StartForward(this._fwds_apply)
 		Call_PushCell(client)
 		Call_Finish()
+		return true
 	}
 
 	float Calculate(int client, any[] data, int size)
@@ -233,7 +235,8 @@ public any ECalc_Apply(Handle plugin, int num)
 	char sBuffer[32]
 	GetNativeString(2, sBuffer, sizeof sBuffer)
 	Effect f
-	if(FindEffect(sBuffer, f))	f.Apply(client)
+	if(FindEffect(sBuffer, f))	return f.Apply(client)
+	return false
 }
 
 public any Native_Run(Handle plugin, int num)

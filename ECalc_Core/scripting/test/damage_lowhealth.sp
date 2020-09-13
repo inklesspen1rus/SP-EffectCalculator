@@ -2,7 +2,7 @@
 
 public Plugin myinfo = {
 	name = "ECalcTest - Damage+ on low health",
-	author = "1.0"
+	author = "2.0"
 }
 
 const float boost = 1.0 // +100%
@@ -10,20 +10,17 @@ const float boost = 1.0 // +100%
 public void OnPluginStart()
 {
 	if(LibraryExists("effectcalc"))
-		ECalc_Hook("damage", "base", ModifyDamage)
+		ECalc_Hook2("damage", "base", ModifyDamage)
 }
 
 public void OnLibraryAdded(const char[] name)
 {
 	if(!strcmp(name, "effectcalc"))
-		ECalc_Hook("damage", "base", ModifyDamage)
+		ECalc_Hook2("damage", "base", ModifyDamage)
 }
 
-public void ModifyDamage(any[] data, int size, float &value)
+public void ModifyDamage(int client, float &value)
 {
-	// see data struct in effect_damage.sp
-	if(0 < data[1] <= MaxClients && GetClientHealth(data[1]) <= 50) // if attacker has 50 or less hp
-	{
+	if(GetClientHealth(client) <= 50) // if attacker has 50 or less hp
 		value += boost
-	}
 }

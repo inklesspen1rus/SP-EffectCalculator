@@ -3,10 +3,9 @@
 
 public Plugin myinfo = {
 	name = "Effect Calculator - Damage",
-	author = "1.0"
+	author = "2.0"
 }
 
-int effect = -1
 bool gLate
 
 public APLRes AskPluginLoad2(Handle plugin, bool late, char[] error, int max)
@@ -16,9 +15,6 @@ public APLRes AskPluginLoad2(Handle plugin, bool late, char[] error, int max)
 
 public void OnPluginStart()
 {
-	if(LibraryExists("effectcalc"))
-		effect = ECalc_GetEffect("damage")
-	
 	if(gLate)
 	{
 		for(int i = MaxClients;i;i--)
@@ -36,18 +32,6 @@ public void OnPluginStart()
 	}
 }
 
-public void OnLibraryRemoved(const char[] name)
-{
-	if(!strcmp(name, "effectcalc"))
-		effect = -1
-}
-
-public void OnLibraryAdded(const char[] name)
-{
-	if(!strcmp(name, "effectcalc"))
-		effect = ECalc_GetEffect("damage")
-}
-
 public void OnEntityCreated(int entity, const char[] classname)
 {
 	if(MaxClients < entity < 2049)
@@ -62,16 +46,20 @@ public void OnClientPutInServer(int client)
 public Action OnEntityTakeDamage(int victim, int& attacker, int& inflictor, float& damage, int& damagetype, int& weapon, float damageForce[3], float damagePosition[3], int damagecustom)
 {
 	static any dmginfo[6]
-	if(effect != -1 && (0 < attacker <= MaxClients || 0 < victim <= MaxClients))
+	dmginfo[0] = victim
+	dmginfo[1] = inflictor
+	dmginfo[2] = damage
+	dmginfo[3] = damagetype
+	dmginfo[4] = weapon
+	if(0 < attacker <= MaxClients)
 	{
-		dmginfo[0] = victim
-		dmginfo[1] = attacker
-		dmginfo[2] = inflictor
-		dmginfo[3] = damage
-		dmginfo[4] = damagetype
-		dmginfo[5] = weapon
-		damage *= ECalc_Run(effect, dmginfo, sizeof dmginfo)
+		damage *= ECalc_Run2(attacker, "damage", dmginfo, sizeof dmginfo)
 		return Plugin_Changed
 	}
-	return Plugin_Continue
+
+	if(0 < attacker <= MaxClients)	{
+		dmginfo[0] = attacker
+		damage /= ECalc_Run2(victim, "damage_resist", dmginfo, sizeof dmginfo)
+	}
+	return Plugin_Changed
 }

@@ -18,7 +18,7 @@
 /***
  *	Hook callback typeset
 ***/
-typeset ECalc_HookCallBack	{
+typeset ECalc_HookApplyCallBack	{
 	function void (int client)
 }
 
@@ -29,6 +29,8 @@ typeset ECalc_HookCallBack	{
 
 	// new
 	function void (int client, float &value, const char[] effect, any[] data, int size)
+	function void (int client, float &value, const char[] effect)
+	function void (int client, float &value)
 }
 
 /***
@@ -72,9 +74,9 @@ native float ECalc_Run2(int client, const char[] effect, any[] data = NULL_VECTO
  *	@param	effect		client
  *	@param	effect		Name of effect
  *
- *	@return				Effect ID for ECalc_Run
+ *	@return				true if effect exists has apply hook
 ***/
-native void ECalc_Apply(int client, const char[] effect);
+native bool ECalc_Apply(int client, const char[] effect);
 
 public SharedPlugin __pl_effectcalc = 
 {
