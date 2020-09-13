@@ -1,11 +1,8 @@
 public Plugin myinfo = {
 	name = "Effect Calculator - Core",
 	author = "inklesspen",
-	version = "1.1"
+	version = "2.0"
 }
-
-bool ecalcdebug = false
-StringMap debugignore
 
 // Structs bcs of heavy plugin construction
 enum struct Mult
@@ -26,27 +23,22 @@ enum struct Mult
 	}
 	
 	// Run hooks
-	void Calculate(any[] data, int size, float &value, const char[] effect)
+	void Calculate(int client, any[] data, int size, float &value, const char[] effect)
 	{
 		Call_StartForward(this._fwd)
-		Call_PushArray(data, size)
-		Call_PushCell(size)
+		Call_PushCell(client)
 		Call_PushFloatRef(value)
 		Call_PushString(effect)
+		Call_PushArray(data, size)
+		Call_PushCell(size)
 		Call_Finish()
 	}
 	
 	// Add hook
-	void AddHook(Handle plugin, Function func)
+	void Hook(Handle plugin, Function func, bool remove = false)
 	{
 		this._fwd.RemoveFunction(plugin, func) // forbidde duplications
-		this._fwd.AddFunction(plugin, func)
-	}
-	
-	// Remove hooks
-	void RemoveHook(Handle plugin, Function func)
-	{
-		this._fwd.RemoveFunction(plugin, func)
+		if(!remove)	this._fwd.AddFunction(plugin, func)
 	}
 	
 	// Hooks count
@@ -62,11 +54,14 @@ enum struct Mult
 	}
 }
 
+StringMap gEffects
 enum struct Effect
 {
 	char name[32]
 	ArrayList _mults
 	StringMap _multnames
+
+	PrivateForward _fwds_apply
 	
 	// Initialization
 	void Init(const char[] name)
@@ -75,12 +70,19 @@ enum struct Effect
 		strcopy(this.name, 32, name) // copying name to local name
 		this._multnames = new StringMap() // creating stringmap for fast-search by name
 		this._mults = new ArrayList(sizeof mult) // ArrayList for multipliers
+		this._fwds_apply = new PrivateForward(ET_Ignore, Param_Cell)
 	}
 	
 	// Calculating final multiplier (as value)
-	float Calculate(any[] data, int size)
+	float Apply(int client)
 	{
-		bool ignore = IsDebugIgnored(this.name)
+		Call_StartForward(this._fwds_apply)
+		Call_PushCell(client)
+		Call_Finish()
+	}
+
+	float Calculate(int client, any[] data, int size)
+	{
 		float value = 1.0
 		float temp
 		Mult mult
@@ -88,11 +90,9 @@ enum struct Effect
 		{
 			temp = 1.0
 			this._mults.GetArray(i, mult, sizeof mult)
-			mult.Calculate(data, size, temp, this.name)
-			if(ecalcdebug && !ignore)	PrintToServer("%s %s %f", this.name, mult.name, temp)
+			mult.Calculate(client, data, size, temp, this.name)
 			value *= temp
 		}
-		if(ecalcdebug && !ignore)	PrintToServer("%s %f", this.name, value)
 		return value
 	}
 	
@@ -122,10 +122,7 @@ enum struct Effect
 		
 		Mult mult
 		this._mults.GetArray(mult_index, mult, sizeof mult)
-		if(remove)
-			mult.RemoveHook(pl, func)
-		else
-			mult.AddHook(pl, func)
+		mult.Hook(pl, func, remove)
 		if(mult.HookCount)
 			this._mults.SetArray(mult_index, mult, sizeof mult)
 		else
@@ -134,57 +131,73 @@ enum struct Effect
 			this._mults.Erase(mult_index)
 		}
 	}
+	
+	// Add or remove apply hook
+	void HookApply(Handle pl, Function func, bool remove = false)
+	{
+		this._fwds_apply.RemoveFunction(pl, func)
+		if(!remove)	this._fwds_apply.AddFunction(pl, func)
+	}
+
+	int ApplyHookCount()
+	{
+		return GetForwardFunctionCount(this._fwds_apply)
+	}
+
+	void Close()
+	{
+		Mult mult
+		for(int g = this._mults.Length-1;g!=-1;g--)	{
+			this._mults.GetArray(g, mult, sizeof mult)
+			mult.Close()
+		}
+
+		this._fwds_apply.Close()
+		this._multnames.Close()
+		this._mults.Close()
+	}
 }
 
-// Global arraylist for effects
-ArrayList gEffects
+bool FindEffect(const char[] name, Effect f)	{
+	if(!gEffects.GetArray(name, f, sizeof f))	return false
+	return true
+}
 
-// And stringmap for fast-search by name
-StringMap gEffectNames
-
-GlobalForward fwdRecalculate
+void GetEffect(const char[] name, Effect f)	{
+	if(!gEffects.GetArray(name, f, sizeof f))	{
+		f.Init(name)
+		gEffects.SetArray(name, f, sizeof f)
+	}
+}
 
 public APLRes AskPluginLoad2(Handle plugin, bool late, char[] error, int max)
 {
 	// Init values
-	Effect f
-	if(!gEffectNames)
-		gEffectNames = new StringMap()
 	if(!gEffects)
-		gEffects = new ArrayList(sizeof(f))
+		gEffects = new StringMap()
 	
 	// Reg library
 	RegPluginLibrary("effectcalc")
 	
 	// Creating natives
-	CreateNative("ECalc_Hook", Native_Hook)
-	CreateNative("ECalc_Run", Native_Run)
-	CreateNative("ECalc_GetEffect", Native_GetEffect)
-	CreateNative("ECalc_Recalculate", ECalc_Recalculate)
-}
-
-// Find or create effect by name
-int GetEffectID(const char[] name)
-{
-	int effect
-	if(gEffectNames.GetValue(name, effect))
-		return effect
-	Effect f
-	f.Init(name)
-	effect = gEffects.PushArray(f, sizeof f)
-	gEffectNames.SetValue(name, effect)
-	return effect
+	CreateNative("ECalc_HookApply", ECalc_HookApply)
+	CreateNative("ECalc_Hook2", Native_Hook)
+	CreateNative("ECalc_Run2", Native_Run)
+	CreateNative("ECalc_Apply", ECalc_Apply)
 }
 
 // Memory cleanup, delete empty multipliers in effects
 public void OnMapStart()
 {
+	StringMapSnapshot snap = gEffects.Snapshot()
+	char sBuffer[32]
 	Effect f
 	Mult mult
-	int i, g
-	for(i = gEffects.Length-1;i!=-1;i--)
-	{
-		gEffects.GetArray(i, f, sizeof f)
+	int g, i
+	for(i = snap.Length-1;i!=-1;i--)	{
+		snap.GetKey(i, sBuffer, sizeof sBuffer)
+		gEffects.GetArray(sBuffer, f, sizeof f)
+
 		for(g = f._mults.Length-1;g!=-1;g--)
 		{
 			f._mults.GetArray(g, mult, sizeof mult)
@@ -194,51 +207,58 @@ public void OnMapStart()
 				f._mults.Erase(g)
 			}
 		}
+
+		if(!f._mults.Length && !f.ApplyHookCount())	{
+			f.Close()
+			gEffects.Remove(f.name)
+			continue
+		}
+
+		f._multnames.Clear()
+		for(g = f._mults.Length-1;g!=-1;g--)
+		{
+			f._mults.GetArray(g, mult, sizeof mult)
+			f._multnames.SetValue(mult.name, g)
+		}
 	}
+	snap.Close()
 }
 
 // See functionality of this natives in .inc file
 // I am so lazy to add description for this
-public any Native_GetEffect(Handle plugin, int num)
-{
-	char sBuffer[32]
-	GetNativeString(1, sBuffer, sizeof sBuffer)
-	return GetEffectID(sBuffer)
-}
 
-public any ECalc_Recalculate(Handle plugin, int num)
+public any ECalc_Apply(Handle plugin, int num)
 {
 	int client = GetNativeCell(1)
 	char sBuffer[32]
-	GetNativeString(1, sBuffer, sizeof sBuffer)
-	Call_StartForward(fwdRecalculate)
-	Call_PushCell(client)
-	Call_PushString(sBuffer)
-	Call_Finish()
+	GetNativeString(2, sBuffer, sizeof sBuffer)
+	Effect f
+	if(FindEffect(sBuffer, f))	f.Apply(client)
 }
 
 public any Native_Run(Handle plugin, int num)
 {
-	int effect = GetNativeCell(1)
-	if(effect >= gEffects.Length)
-	{
-		ThrowNativeError(0, "INVALID EFFECT")
+	int client = GetNativeCell(1)
+	if(client < 1 || client > MaxClients)	{
+		ThrowNativeError(-1, "Invalid client %i", client)
 		return -1.0
 	}
-	int size = GetNativeCell(3)
-	any[] data = new any[size]
-	GetNativeArray(2, data, size)
+	char effect[32]
+	GetNativeString(2, effect, sizeof effect)
 	Effect f
-	gEffects.GetArray(effect, f, sizeof f)
-	return f.Calculate(data, size)
+	if(FindEffect(effect, f))	{
+		int size = GetNativeCell(3)
+		any[] data = new any[size]
+		GetNativeArray(2, data, size)
+		return f.Calculate(client, data, size)
+	}
+	return 1.0
 }
 
-public any Native_Hook(Handle plugin, int num)
+public any ECalc_HookApply(Handle plugin, int num)
 {
 	char sBuffer[32]
 	GetNativeString(1, sBuffer, sizeof sBuffer)
-	int effect = GetEffectID(sBuffer)
-	GetNativeString(2, sBuffer, sizeof sBuffer)
 	Function func = GetNativeFunction(3)
 	if(func == INVALID_FUNCTION)
 	{
@@ -246,44 +266,23 @@ public any Native_Hook(Handle plugin, int num)
 		return
 	}
 	Effect f
-	gEffects.GetArray(effect, f, sizeof f)
-	f.Hook(sBuffer, plugin, func, GetNativeCell(4))
-	gEffects.SetArray(effect, f, sizeof f)
+	GetEffect(sBuffer, f)
+	f.HookApply(plugin, func, GetNativeCell(4))
 }
 
-public void OnPluginStart()
-{
-	debugignore = new StringMap()
-	
-	RegServerCmd("sm_effect_debug", EffectDebugCMD)
-	RegServerCmd("sm_effect_debug_ignore", EffectDebugIgnoreCMD)
-
-	fwdRecalculate = new GlobalForward("ECalc_Requested", ET_Ignore, Param_Cell, Param_String)
-}
-
-public Action EffectDebugIgnoreCMD(int args)
+public any Native_Hook(Handle plugin, int num)
 {
 	char sBuffer[32]
-	GetCmdArg(1, sBuffer, sizeof sBuffer)
-	IgnoreDebug(sBuffer, !IsDebugIgnored(sBuffer))
-}
-
-public Action EffectDebugCMD(int args)
-{
-	ecalcdebug = !ecalcdebug
-	PrintToServer("Debug: %i", ecalcdebug)
-	return Plugin_Handled
-}
-
-void IgnoreDebug(const char[] effect, bool ignore)
-{
-	debugignore.SetValue(effect, ignore)
-}
-
-bool IsDebugIgnored(const char[] effect)
-{
-	bool fa
-	if(debugignore.GetValue(effect, fa))
-		return fa
-	return false
+	GetNativeString(1, sBuffer, sizeof sBuffer)
+	char effect[32]
+	GetNativeString(2, effect, sizeof effect)
+	Function func = GetNativeFunction(3)
+	if(func == INVALID_FUNCTION)
+	{
+		ThrowNativeError(0, "INVALID_FUNCTION")
+		return
+	}
+	Effect f
+	GetEffect(effect, f)
+	f.Hook(sBuffer, plugin, func, GetNativeCell(4))
 }

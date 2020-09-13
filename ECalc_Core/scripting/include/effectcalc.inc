@@ -15,15 +15,20 @@
  * Good luck
 ***/
 
-forward void ECalc_Requested(int client, const char[] effect);
-
 /***
  *	Hook callback typeset
 ***/
 typeset ECalc_HookCallBack	{
-	function void (any[] data, int size, float &value);
-	function void (any[] data, int size, float &value, const char[] effect);
-	//function void (enum struct data, int size, float &value); // if array size is 1 or enum struct
+	function void (int client)
+}
+
+typeset ECalc_HookCallBack	{
+	// old
+	//function void (any[] data, int size, float &value);
+	//function void (any[] data, int size, float &value, const char[] effect);
+
+	// new
+	function void (int client, float &value, const char[] effect, any[] data, int size)
 }
 
 /***
@@ -36,7 +41,19 @@ typeset ECalc_HookCallBack	{
  *
  *	@no return
 ***/
-native void ECalc_Hook(const char[] effect, const char[] mult_name, ECalc_HookCallBack func, bool remove = false);
+native void ECalc_Hook2(const char[] effect, const char[] mult_name, ECalc_HookCallBack func, bool remove = false);
+
+/***
+ *	ECalc_Hook			Hook calculating effect multiplier
+ *
+ *	@param	effect		Name of effect
+ *	@param	mult_name	Name of multiplier (same multipliers will sum)
+ *	@param	func		Hook callback (See ECalc_HookCallBack)
+ *	@param	remove		If true, your hook will be removed
+ *
+ *	@no return
+***/
+native void ECalc_HookApply(const char[] effect, ECalc_HookApplyCallBack func, bool remove = false);
 
 /***
  *	ECalc_Run			Calculating effects final multiplier
@@ -47,7 +64,7 @@ native void ECalc_Hook(const char[] effect, const char[] mult_name, ECalc_HookCa
  *
  *	@return	multiplier	Final multiplier of this effect, ready to use
 **/
-native float ECalc_Run(int effect, any[] data = NULL_VECTOR, int size = 0);
+native float ECalc_Run2(int client, const char[] effect, any[] data = NULL_VECTOR, int size = 0);
 
 /***
  *	ECalc_Recalculate	Functions calls to recalculate some effects of player
@@ -57,32 +74,7 @@ native float ECalc_Run(int effect, any[] data = NULL_VECTOR, int size = 0);
  *
  *	@return				Effect ID for ECalc_Run
 ***/
-native void ECalc_Recalculate(int client, const char[] effect);
-
-/***
- *	ECalc_GetEffect		Returns effect ID
- *
- *	@param	effect		Name of effect
- *
- *	@return				Effect ID for ECalc_Run
-***/
-native int ECalc_GetEffect(const char[] effect);
-
-/***
- *	ECalc_Run2			Analog o ECalc_Run but use name instead of ID of effect.
- *						Use when you are too lazy or testing
- *						Core has StringMap for fast-search by name but run by Effect ID will be faster
- *
- *	@param	effect		Effect name
- *	@param	data		Dynamic array for data
- *	@param	size		Count of values in array
- *
- *	@return	multiplier	Final multiplier of this effect, ready to use
-**/
-stock float ECalc_Run2(const char[] effect, any[] data = NULL_VECTOR, int size = 0)
-{
-	return ECalc_Run(ECalc_GetEffect(effect), data, size)
-}
+native void ECalc_Apply(int client, const char[] effect);
 
 public SharedPlugin __pl_effectcalc = 
 {
@@ -98,8 +90,10 @@ public SharedPlugin __pl_effectcalc =
 #if !defined REQUIRE_PLUGIN
 public void __pl_effectcalc_SetNTVOptional()
 {
-	MarkNativeAsOptional("ECalc_Hook");
-	MarkNativeAsOptional("ECalc_Run");
-	MarkNativeAsOptional("ECalc_GetEffect");
+	MarkNativeAsOptional("ECalc_Hook2");
+	MarkNativeAsOptional("ECalc_Run2");
+	MarkNativeAsOptional("ECalc_GetID");
+	MarkNativeAsOptional("ECalc_GetName");
+	MarkNativeAsOptional("ECalc_Recalculate");
 }
 #endif
