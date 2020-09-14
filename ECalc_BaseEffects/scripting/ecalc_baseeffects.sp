@@ -245,7 +245,7 @@ public Action OnEntityTakeDamage(int victim, int& attacker, int& inflictor, floa
 		dmginfo[0] = attacker
 		damage *= ECalc_Run2(victim, "dmgresist")
 	}
-	return Plugin_Continue
+	return Plugin_Changed
 }
 
 void CalculateSpeed(int client)
