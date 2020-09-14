@@ -243,7 +243,7 @@ public Action OnEntityTakeDamage(int victim, int& attacker, int& inflictor, floa
 	}
 	if(cvarDMGResist.BoolValue && 1 <= victim <= MaxClients)	{
 		dmginfo[0] = attacker
-		damage *= ECalc_Run2(victim, "dmgresist")
+		damage /= ECalc_Run2(victim, "dmgresist")
 	}
 	return Plugin_Changed
 }
