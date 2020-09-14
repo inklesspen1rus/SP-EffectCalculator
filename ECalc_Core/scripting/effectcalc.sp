@@ -19,7 +19,7 @@ enum struct Mult
 		strcopy(this.name, 32, name)
 		
 		// Create private forward
-		this._fwd = new PrivateForward(ET_Ignore, Param_Array, Param_Cell, Param_FloatByRef, Param_String)
+		this._fwd = new PrivateForward(ET_Ignore, Param_Cell, Param_FloatByRef, Param_String, Param_Array, Param_Cell)
 	}
 	
 	// Run hooks
@@ -276,9 +276,9 @@ public any ECalc_HookApply(Handle plugin, int num)
 public any Native_Hook(Handle plugin, int num)
 {
 	char sBuffer[32]
-	GetNativeString(1, sBuffer, sizeof sBuffer)
 	char effect[32]
-	GetNativeString(2, effect, sizeof effect)
+	GetNativeString(2, sBuffer, sizeof sBuffer)
+	GetNativeString(1, effect, sizeof effect)
 	Function func = GetNativeFunction(3)
 	if(func == INVALID_FUNCTION)
 	{
