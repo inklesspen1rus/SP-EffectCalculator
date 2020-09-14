@@ -250,9 +250,9 @@ public any Native_Run(Handle plugin, int num)
 	GetNativeString(2, effect, sizeof effect)
 	Effect f
 	if(FindEffect(effect, f))	{
-		int size = GetNativeCell(3)
+		int size = GetNativeCell(4)
 		any[] data = new any[size]
-		GetNativeArray(2, data, size)
+		GetNativeArray(3, data, size)
 		return f.Calculate(client, data, size)
 	}
 	return 1.0
