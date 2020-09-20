@@ -239,11 +239,11 @@ public Action OnEntityTakeDamage(int victim, int& attacker, int& inflictor, floa
 	dmginfo[4] = weapon
 	if(cvarDamage.BoolValue && 1 <= attacker <= MaxClients)	{
 		dmginfo[0] = victim
-		damage *= ECalc_Run2(attacker, "damage")
+		damage *= ECalc_Run2(attacker, "damage", dmginfo, sizeof dmginfo)
 	}
 	if(cvarDMGResist.BoolValue && 1 <= victim <= MaxClients)	{
 		dmginfo[0] = attacker
-		damage /= ECalc_Run2(victim, "dmgresist")
+		damage /= ECalc_Run2(victim, "dmgresist", dmginfo, sizeof dmginfo)
 	}
 	return Plugin_Changed
 }
