@@ -92,6 +92,7 @@ public SharedPlugin __pl_effectcalc =
 #if !defined REQUIRE_PLUGIN
 public void __pl_effectcalc_SetNTVOptional()
 {
+	MarkNativeAsOptional("ECalc_Apply");
 	MarkNativeAsOptional("ECalc_Hook2");
 	MarkNativeAsOptional("ECalc_Run2");
 	MarkNativeAsOptional("ECalc_GetID");
