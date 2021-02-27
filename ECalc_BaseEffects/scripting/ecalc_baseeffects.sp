@@ -152,16 +152,16 @@ public void OnLibraryAdded(const char[] name)
 
 public Action ApplyGravity(int client)
 {
-	if(!cvarSpeed.BoolValue)	return Plugin_Continue
+	if(!cvarGravity.BoolValue)	return Plugin_Continue;
 	CalculateGravity(client)
-	return Plugin_Stop
+	return Plugin_Stop;
 }
 
 public Action ApplySpeed(int client)
 {
-	if(!cvarSpeed.BoolValue)	return Plugin_Continue
+	if(!cvarSpeed.BoolValue)	return Plugin_Continue;
 	CalculateSpeed(client)
-	return Plugin_Stop
+	return Plugin_Stop;
 }
 
 public void OnEntityCreated(int entity, const char[] classname)
@@ -204,12 +204,6 @@ public void OnClientPutInServer(int client)
 	SDKHookEx(client, SDKHook_OnTakeDamage, OnEntityTakeDamage)
 	SDKHookEx(client, SDKHook_GroundEntChangedPost, GroundEntChangedPost)
 	SDKHookEx(client, SDKHook_GetMaxHealth, OnGetMaxHealth)
-	SDKHookEx(client, SDKHook_WeaponSwitchPost, WeaponSwitchPost)
-}
-
-public void WeaponSwitchPost(int client, int weapon)
-{
-	CalculateSpeed(client)
 }
 
 public Action OnGetMaxHealth(int client, int &maxhealth)
@@ -263,7 +257,8 @@ void CalculateInvis(int client)
 
 void CalculateGravity(int client)
 {
-	if(cvarGravity.BoolValue)	SetEntityGravity(client, 1.0/ECalc_Run2(client, "gravity"))
+	if(cvarGravity.BoolValue)
+		SetEntityGravity(client, 1.0/ECalc_Run2(client, "gravity"))
 }
 
 int FindSendPropInfo2(const char[] name, const char[] prop)
