@@ -19,7 +19,7 @@
  *	Hook callback typeset
 ***/
 typeset ECalc_HookApplyCallBack	{
-	function Action (int client) // return Plugin_Stop on applying
+	function Action (int client); // return Plugin_Stop on applying
 }
 
 typeset ECalc_HookCallBack	{
@@ -28,9 +28,9 @@ typeset ECalc_HookCallBack	{
 	//function void (any[] data, int size, float &value, const char[] effect);
 
 	// new
-	function void (int client, float &value, const char[] effect, any[] data, int size)
-	function void (int client, float &value, const char[] effect)
-	function void (int client, float &value)
+	function void (int client, float &value, const char[] effect, any[] data, int size);
+	function void (int client, float &value, const char[] effect);
+	function void (int client, float &value);
 }
 
 /***
