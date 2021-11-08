@@ -66,7 +66,7 @@ public void OnPluginStart()
 	offs_NextAttack					= FindSendPropInfo2("CBasePlayer", "m_flNextAttack");
 	offs_LaggedMovementValue		= FindSendPropInfo2("CBasePlayer", "m_flLaggedMovementValue");
 	
-	offs_Alpha		= FindSendPropInfo2("CBaseEntity", "m_clrRender") + 3;
+	offs_Alpha		= FindSendPropInfo2("CBasePlayer", "m_clrRender") + 3;
 	
 	ConVar cvar = FindConVar("sv_disable_immunity_alpha");
 	if(cvar != INVALID_HANDLE)
@@ -105,7 +105,7 @@ public void OnPluginStart()
 
 public void LockImmunityAlpha(ConVar cvar, const char[] oldvalue, const char[] newvalue)
 {
-	if(strcmp(newvalue, "1"))
+	if(!cvar.BoolValue)
 		cvar.BoolValue = true;
 }
 
@@ -150,8 +150,16 @@ public void OnLibraryAdded(const char[] name)
 	if(!strcmp(name, "effectcalc"))
 	{
 		ECalc_HookApply("speed", ApplySpeed);
-		ECalc_HookApply("gravity", ApplyGravity);
+		ECalc_HookApply("gravity", ApplyInvis);
+		ECalc_HookApply("invis", ApplyGravity);
 	}
+}
+
+public Action ApplyInvis(int client)
+{
+	if(!cvarInvis.BoolValue)	return Plugin_Continue;
+	CalculateInvis(client);
+	return Plugin_Stop;
 }
 
 public Action ApplyGravity(int client)
